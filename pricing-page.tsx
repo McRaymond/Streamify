@@ -1,11 +1,11 @@
-"use client"
-
 import { PricingCard } from "@/components/pricing-card"
-import { plans } from "@/lib/plans" // ✅ Reuse the shared data
+import { plans } from "@/lib/plans"
 
-export default function Page() {
+
+
+export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-black text-white py-20 px-4">
+    <div className="min-h-screen bg-black text-white py-20 px-4">
       <div className="max-w-6xl mx-auto space-y-12">
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold">Simple pricing for advanced people</h1>
@@ -20,6 +20,6 @@ export default function Page() {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   )
 }
