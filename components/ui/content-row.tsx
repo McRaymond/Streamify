@@ -60,6 +60,7 @@ export function ContentRow({ title, movies }: ContentRowProps) {
           ))}
         </div>
 
+
         <Button
           variant="ghost"
           size="icon"
