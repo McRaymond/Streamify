@@ -4,13 +4,15 @@ import { useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MovieCard } from "@/components/ui/movie-card"
-import { movies } from "@/lib/movies"
+import { movies as allMovies } from "@/lib/movies"
+import type { Movie } from "@/lib/movies"
 
 interface ContentRowProps {
   title: string
+  movies?: Movie[]
 }
 
-export function ContentRow({ title }: ContentRowProps) {
+export function ContentRow({ title, movies }: ContentRowProps) {
   const rowRef = useRef<HTMLDivElement>(null)
   const [isMoved, setIsMoved] = useState(false)
 
@@ -27,7 +29,8 @@ export function ContentRow({ title }: ContentRowProps) {
     }
   }
 
-  const filteredMovies = movies.filter(movie => movie.category === title)
+  // ✅ Use passed movies or fallback to filtered ones
+  const rowMovies = movies ?? allMovies.filter(movie => movie.category === title)
 
   return (
     <div className="space-y-2 md:space-y-4">
@@ -48,11 +51,11 @@ export function ContentRow({ title }: ContentRowProps) {
           ref={rowRef}
           className="flex items-center space-x-2 overflow-x-scroll scrollbar-hide md:space-x-4 pb-4"
           style={{
-            scrollbarWidth: "none",         // Firefox
-            msOverflowStyle: "none",        // IE & Edge
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
           }}
         >
-          {filteredMovies.map((movie) => (
+          {rowMovies.map((movie) => (
             <MovieCard key={movie.id} movie={movie} />
           ))}
         </div>

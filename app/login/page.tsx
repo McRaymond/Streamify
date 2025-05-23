@@ -1,31 +1,57 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { FcGoogle } from "react-icons/fc"
 import { FaApple } from "react-icons/fa"
-import { users } from "@/lib/users" // ✅ Import users from user database
+import { users as staticUsers } from "@/lib/users"
 
 export default function LoginPage() {
   const router = useRouter()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState("")
+
+  // Auto-fill remembered email
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("rememberedEmail")
+    if (rememberedEmail) {
+      setEmail(rememberedEmail)
+      setRememberMe(true)
+    }
+  }, [])
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
 
-    const user = users.find((u) => u.email === email)
+    // Combine static and dynamic users
+    const dynamicUsers = JSON.parse(localStorage.getItem("dynamicUsers") || "[]")
+    const allUsers = [...staticUsers, ...dynamicUsers]
+    const user = allUsers.find((u) => u.email === email)
 
     if (!user) {
       setError("No user found with that email")
     } else if (user.password !== password) {
       setError("Incorrect password")
     } else {
-      localStorage.setItem("loggedInUser", user.email) // ✅ Save email to localStorage
-      router.push("/home") // ✅ Redirect after login
+      // Save full user info in localStorage
+      localStorage.setItem("loggedInUser", JSON.stringify({
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar || "/avatar/default.png",
+      }))
+
+      // Handle remember me
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", user.email)
+      } else {
+        localStorage.removeItem("rememberedEmail")
+      }
+
+      router.push("/home")
     }
   }
 
@@ -76,9 +102,25 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="p-3 rounded bg-gray-800 text-white placeholder-gray-400"
           />
-          <button type="submit" className="bg-purple-700 hover:bg-purple-800 text-white py-3 rounded font-semibold transition">
+
+          {/* Remember Me */}
+          <label className="flex items-center text-sm text-gray-300 gap-2">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="accent-purple-600"
+            />
+            Remember me
+          </label>
+
+          <button
+            type="submit"
+            className="bg-purple-700 hover:bg-purple-800 text-white py-3 rounded font-semibold transition"
+          >
             Login
           </button>
+
           {error && <p className="text-red-500 text-sm text-center mt-2">{error}</p>}
         </form>
       </div>

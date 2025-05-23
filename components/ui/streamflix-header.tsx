@@ -1,26 +1,37 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Search, Bell, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { users } from "@/lib/users" // 👈 Import your user list
+
+type UserInfo = {
+  name: string
+  email: string
+  avatar?: string
+}
 
 export default function StreamflixHeader() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null)
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
+  // Read user info from localStorage on client side
   useEffect(() => {
-    const storedEmail = localStorage.getItem("loggedInUser")
-    if (storedEmail) {
-      const matchedUser = users.find((u) => u.email === storedEmail)
-      if (matchedUser) {
-        setUserInfo({ name: matchedUser.name, email: matchedUser.email })
+    const storedUser = localStorage.getItem("loggedInUser")
+    if (storedUser) {
+      try {
+        const parsed: UserInfo = JSON.parse(storedUser)
+        setUserInfo(parsed)
+      } catch {
+        console.warn("Invalid user data in localStorage.")
       }
     }
 
+    // Handle click outside dropdown to close
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false)
@@ -30,6 +41,11 @@ export default function StreamflixHeader() {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  const handleSignOut = () => {
+    localStorage.removeItem("loggedInUser")
+    router.push("/login")
+  }
 
   return (
     <header className="fixed top-0 w-full z-50 bg-transparent backdrop-blur-sm">
@@ -55,19 +71,23 @@ export default function StreamflixHeader() {
 
           {/* Avatar + Dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center gap-2 focus:outline-none">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-2 focus:outline-none"
+            >
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatar/avatar.png" alt="User avatar" />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage src={userInfo?.avatar || "/avatar/default.png"} alt="User avatar" />
+                <AvatarFallback>{userInfo?.name?.charAt(0) || "U"}</AvatarFallback>
               </Avatar>
               <ChevronDown className="h-4 w-4 text-white" />
             </button>
 
-            {dropdownOpen && userInfo && (
-              <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-gray-800 border border-gray-700 z-50">
+            {/* Dropdown Menu */}
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-52 rounded-lg shadow-lg bg-gray-800 border border-gray-700 z-50">
                 <div className="px-4 py-3">
-                  <p className="text-sm text-white">{userInfo.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{userInfo.email}</p>
+                  <p className="text-sm text-white">{userInfo?.name || "Guest"}</p>
+                  <p className="text-xs text-gray-400 truncate">{userInfo?.email || "email@unknown.com"}</p>
                 </div>
                 <ul className="py-1 text-sm text-gray-300">
                   <li>
@@ -77,9 +97,12 @@ export default function StreamflixHeader() {
                     <Link href="/settings" className="block px-4 py-2 hover:bg-gray-700">Settings</Link>
                   </li>
                   <li>
-                    <Link href="/" className="block px-4 py-2 hover:bg-gray-700" onClick={() => localStorage.removeItem("loggedInUser")}>
+                    <button
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-700"
+                    >
                       Sign out
-                    </Link>
+                    </button>
                   </li>
                 </ul>
               </div>
